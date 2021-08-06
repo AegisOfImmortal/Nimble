@@ -31,14 +31,13 @@ async def consume_signaling(pc, signaling):
     '''
     Utility function to keep signal receive port and offer-answer active
     Taken from aiortc client example
-    Also creates answer
+    Also awaits answer
     '''
     while True:
         obj = await signaling.receive()
 
         if isinstance(obj, RTCSessionDescription):
             await pc.setRemoteDescription(obj)
-
             if obj.type == "offer":
                 await pc.setLocalDescription(await pc.createAnswer())
                 await signaling.send(pc.localDescription)
@@ -48,16 +47,16 @@ async def consume_signaling(pc, signaling):
             print("Exiting")
             break
 
-def imageParse(q, X, Y):
+def imageParse(queue, X, Y):
     '''
     9. Parse the image and determine the current location of the ball
     input:
-        q (Queue): multiprocessing queue for passing image data
-        X (Value): Shared variable for x coordinate
-        Y (Value): Shared variable for x coordinate
+        queue: multiprocessing queue where parsed images are sorted 
+        X: multiprocessing.value storage of X coords
+        Y: multiprocessing.value storage of Y coords
     10. Store computed coordinates as values
     '''
-    img = q.get()
+    img = queue.get()
     gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(gray_image, 127, 255, 0)
     M = cv2.moments(thresh)
@@ -68,13 +67,6 @@ def imageParse(q, X, Y):
 async def analyzeTrack(pc, track):
     '''
     8. Send recieved image to process_a using queue
-    Poll server for frame, predict ball center via Process, send coordinates
-    over DataChannel.
-
-            Parameters:
-                    pc (RTCPeerConnection): Remote peer object
-                    track (RemoteStreamTrack): object to receive server frames
-
     '''
     localVideo = FrameTransport(track)
     dc = pc.createDataChannel('coords')

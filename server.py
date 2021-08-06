@@ -12,28 +12,26 @@ class BouncingBall():
     ''' 4. Generates 2D image ball bouncing '''
 
     def __init__(self):
-        ''' Initialization of Animation parameters '''
+        ''' Initialization of ball parameters '''
 
-        self.WIDTH = 720
-        self.HEIGHT = 480
-        self.dx = 10
-        self.dy = 10
-        self.xCo = 240
-        self.yCo = 240
-        self.ballRad = 10
-        self.ballColor = (0, 255, 0)
-        self.i = 0
-        self.predX = 0
-        self.predY = 0
+        self.Width = 960
+        self.Height = 540
+        self.xCoord = 240
+        self.yCoord = 240
+        self.Xbounce = 5
+        self.Ybounce = 5
+        self.radius = 10
+        self.color = (0, 255, 0)
 
-    def Inbound(self, maxBound, x):
+    def Outbound(self, maxBound, x):
         '''
         Inbound check for ball
         Input:
             maxBound: int for maximum coordinate
             x: int for coordinate to be checked
         Output:
-            Inbound check True/False
+            Out of bound: True
+            Inbound: False
             
         '''
         if (x >= maxBound or x <= 0):
@@ -48,17 +46,16 @@ class BouncingBall():
             xCo,yCo; x,y coordinates
 
         '''
-        img = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype = 'uint8')
-        if self.Inbound(self.WIDTH, self.xCo):
-            self.dx *= -1
-        if self.Inbound(self.HEIGHT, self.yCo):
-            self.dy *= -1
+        img = np.zeros((self.Height, self.Width, 3), dtype = 'uint8')
+        if self.Outbound(self.Width, self.xCoord):
+            self.Xbounce *= -1
+        if self.Outbound(self.Height, self.yCoord):
+            self.Ybounce *= -1
 
-        self.xCo += self.dx
-        self.yCo += self.dy
-        self.i += 1
-        cv2.circle(img, (self.xCo, self.yCo), self.ballRad, self.ballColor, -1)
-        return (img, self.xCo, self.yCo)
+        self.xCoord += self.Xbounce
+        self.yCoord += self.Ybounce
+        cv2.circle(img, (self.xCoord, self.yCoord), self.radius, self.color, -1)
+        return (img, self.xCoord, self.yCoord)
 
 class FrameConstruct(VideoStreamTrack):
     '''
@@ -155,7 +152,7 @@ async def main(pc, signaling):
 
             if (message.startswith("coords")):
                 coords = message[7:].split(",")
-                computeErrors(ball.xCo, ball.yCo, int(coords[0]), int(coords[1]))
+                computeErrors(ball.xCoord, ball.yCoord, int(coords[0]), int(coords[1]))
 
     pc.addTrack(track)
     await pc.setLocalDescription(await pc.createOffer())
@@ -165,7 +162,7 @@ async def main(pc, signaling):
 
 
 if __name__ == "__main__":
-    print("Server started")
+    print("Server program initiated")
     parser = argparse.ArgumentParser(description="Ball Position Detector - Server")
     add_signaling_arguments(parser)
 
