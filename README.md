@@ -17,4 +17,4 @@ Unit tests has been provided and can be run seperately or all via
 
     pytest-3
 
-Demo video, Docker Containers and minibuke has been provided
+Demo video, Docker Containers and minibuke has been provided.
