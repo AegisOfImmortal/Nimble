@@ -17,4 +17,5 @@ Unit tests has been provided and can be run seperately or all via
 
     pytest-3
 
-Demo video, Docker Containers and minibuke has been provided.
+Demo video, Docker files has been provided.
+Once the docker image is created it can be deployed via minikube.
