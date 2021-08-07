@@ -9,7 +9,6 @@ from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription, R
 from aiortc.contrib.signaling import BYE, TcpSocketSignaling, add_signaling_arguments
 
 class FrameTransport(MediaStreamTrack):
-
     '''5. Transmit images (frames) using MediaStreamTrack'''
 
     kind = "video"
@@ -18,12 +17,10 @@ class FrameTransport(MediaStreamTrack):
         self.track = track
 
     async def recv(self):
-
         '''
         Waits for the frame to receive
             output: the frame received
         '''
-
         frame = await self.track.recv()
         return frame
 
@@ -60,15 +57,14 @@ def imageParse(queue, X, Y):
     gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(gray_image, 127, 255, 0)
     M = cv2.moments(thresh)
-    if (M["m00"] != 0):
-        X.value = int(M["m10"] / M["m00"])
-        Y.value = int(M["m01"] / M["m00"])
+    X.value = int(M["m10"] / M["m00"])
+    Y.value = int(M["m01"] / M["m00"])
 
-async def analyzeTrack(pc, track):
+async def TransportTrack(pc, track):
     '''
     8. Send recieved image to process_a using queue
     '''
-    localVideo = FrameTransport(track)
+    VideoStream = FrameTransport(track)
     dc = pc.createDataChannel('coords')
 
     X = Value('i', 0)
@@ -85,17 +81,16 @@ async def analyzeTrack(pc, track):
         try:
             process_a = Process(target = imageParse, args = (process_q, X, Y))
             process_a.start()
-            frame = await localVideo.recv()
+            frame = await VideoStream.recv()
 
             img = frame.to_ndarray(format="bgr24")
-            cv2.imshow("Client Feed", img)
+            cv2.imshow("Server generated stream", img)
             cv2.waitKey(1)
             process_q.put(img)
             process_a.join()
             dc.send("coords:" + str(X.value) + "," + str(Y.value))
-        except Exception as e:
-            print(e)
-
+        except Exception:
+            pass
 
 
 async def main(pc, signaling):
@@ -107,26 +102,25 @@ async def main(pc, signaling):
         signaling : TcpSocketSignaling object
 
     '''
-    params = await signaling.connect()
+    await signaling.connect()
 
     @pc.on("track")
     async def on_track(track):
-        print("Track %s received" % track.kind)
-        await analyzeTrack(pc, track)
+        await TransportTrack(pc, track)
 
     @pc.on("datachannel")
     def on_datachannel(channel):
-        print(channel, "-", "created by remote party")
+        print('Received from channel:',channel)
 
         @channel.on("message")
         def on_message(message):
-            print(channel, "<", message)
+            print('Message from channel ',channel, ":", message)
 
     await consume_signaling(pc, signaling)
 
 
 if __name__ == "__main__":
-    print("Client started")
+    print("Client program initiated")
     parser = argparse.ArgumentParser(description="Ball Position Detector - Client")
 
     add_signaling_arguments(parser)

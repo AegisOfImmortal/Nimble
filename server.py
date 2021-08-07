@@ -16,8 +16,8 @@ class BouncingBall():
 
         self.Width = 960
         self.Height = 540
-        self.xCoord = 240
-        self.yCoord = 240
+        self.xCoord = 60
+        self.yCoord = 60
         self.Xbounce = 5
         self.Ybounce = 5
         self.radius = 10
@@ -32,7 +32,6 @@ class BouncingBall():
         Output:
             Out of bound: True
             Inbound: False
-            
         '''
         if (x >= maxBound or x <= 0):
             return True
@@ -57,7 +56,7 @@ class BouncingBall():
         cv2.circle(img, (self.xCoord, self.yCoord), self.radius, self.color, -1)
         return (img, self.xCoord, self.yCoord)
 
-class FrameConstruct(VideoStreamTrack):
+class FrameConstruction(VideoStreamTrack):
     '''
     5. Creates the bouncing ball and prepares for transfer to client
     Use the VideoStreamTrack class to package the frames
@@ -71,8 +70,8 @@ class FrameConstruct(VideoStreamTrack):
 
         super().__init__()
         self.ball =  ball
-        self.x = 0
-        self.y = 0
+        self.x = 60
+        self.y = 60
 
 
     async def recv(self):
@@ -107,9 +106,8 @@ def computeErrors(x1, y1, x2, y2):
     ''' Calculates the difference (error) within coordinaties '''
 
     error = ((x1 - x2)**2 + (y1 - y2)**2)**(1/2)
-
-    print("Real Center: " + str(x1) + ", " + str(y1))
-    print("Pred Center: " + str(x2) + ", " + str(y2))
+    print("Actual Center: " + str(x1) + ", " + str(y1))
+    print("Computed Center: " + str(x2) + ", " + str(y2))
     print("Error: " + str(error))
 
 
@@ -123,26 +121,9 @@ async def main(pc, signaling):
 
     '''
     ball = BouncingBall()
-    track = FrameConstruct(ball)
-    params = await signaling.connect()
-
-    dc = pc.createDataChannel('chat')
-
-    @pc.on('icegatheringstatechange')
-    def pcIceGatherStateChange():
-        print('NEW Ice Gathering State %s' % pc.iceGatheringState)
-
-    @pc.on('iceconnectionstatechange')
-    def pcIceConnectionStateChange():
-        print('NEW Ice Connection State %s' % pc.iceConnectionState)
-
-    @pc.on('signalingstatechange')
-    def pcSignalingStateChange():
-        print('NEW Signaling State %s' % pc.signalingState)
-
-    @pc.on('track')
-    def pcTrack():
-        print('NEW track %s' % track.id)
+    track = FrameConstruction(ball)
+    await signaling.connect()
+    pc.createDataChannel('chat')
 
     @pc.on("datachannel")
     def on_datachannel(channel):
@@ -157,7 +138,6 @@ async def main(pc, signaling):
     pc.addTrack(track)
     await pc.setLocalDescription(await pc.createOffer())
     await signaling.send(pc.localDescription)
-
     await consume_signaling(pc, signaling)
 
 
@@ -165,12 +145,9 @@ if __name__ == "__main__":
     print("Server program initiated")
     parser = argparse.ArgumentParser(description="Ball Position Detector - Server")
     add_signaling_arguments(parser)
-
     args = parser.parse_args()
-
     signaling = TcpSocketSignaling(args.signaling_host, args.signaling_port)
     pc = RTCPeerConnection()
-
 
     loop = asyncio.get_event_loop()
     try:
