@@ -1,6 +1,4 @@
-# Nimble Programming Challenge
-
-This project intends to solve the problems given by Nimble Programming Challenge.
+This project intends to create a stream of video receivable from a server to client.
 
 Server.py creates a running server that generates a green ball bouncing over a scape of 960*540, in a video stream of frames and will be sent to clients via aiortc TCPSocketSignaling.
 Usage:
